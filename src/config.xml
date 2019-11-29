@@ -5,8 +5,8 @@
         <homepage>https://github.com/wirecloud-fiware/ngsi-registration-browser-widget</homepage>
         <email>wirecloud@conwet.com</email>
         <image>images/catalogue.png</image>
-        <description>Browse the available registrations of a given Orio context broker server</description>
-        <authors>Álvaro Arranz García &lt;aarranz@conwet.com&gt;, Carlos Blanco Vallejo &lt;cblanco@ficodes.com></authors>
+        <description>Browse the available registrations of a given Orion context broker server</description>
+        <authors>Álvaro Arranz García &lt;aarranz@conwet.com&gt;, Carlos Blanco Vallejo &lt;cblanco@ficodes.com&gt;, Kazuhito Suda &lt;kazuhito@fisuda.jp&gt;</authors>
         <license>Apache License 2.0</license>
         <licenseurl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseurl>
         <doc>doc/userguide.md</doc>

@@ -20,7 +20,7 @@
 
     "use strict";
 
-    var NGSITypeBrowser = function NGSITypeBrowser() {
+    var NGSIRegistrationBrowser = function NGSIRegistrationBrowser() {
 
         /* Context */
         mp.widget.context.registerCallback(function (newValues) {
@@ -46,7 +46,7 @@
         this.table = null;
     };
 
-    NGSITypeBrowser.prototype.init = function init() {
+    NGSIRegistrationBrowser.prototype.init = function init() {
         createNGSISource.call(this);
         this.updateNGSIConnection();
 
@@ -60,9 +60,20 @@
         this.template_output = mp.widget.createOutputEndpoint();
         this.update_registration_endpoint = mp.widget.createInputEndpoint(onUpdateRegistration.bind(this));
         this.create_registration_endpoint = mp.widget.createInputEndpoint(onCreateRegistration.bind(this));
+
+        this.create_entity_button = new se.Button({
+            class: "se-btn-circle add-entity-button z-depth-3",
+            iconClass: "fa fa-plus",
+        });
+        this.create_entity_button.addEventListener('click', function (button) {
+            openEditorWidget.call(this, button, "create");
+            this.template_output.pushEvent(JSON.stringify(emptyRegistration));
+        }.bind(this));
+
+        this.layout.center.appendChild(this.create_entity_button);
     };
 
-    NGSITypeBrowser.prototype.updateNGSIConnection = function updateNGSIConnection() {
+    NGSIRegistrationBrowser.prototype.updateNGSIConnection = function updateNGSIConnection() {
 
         this.ngsi_server = mp.prefs.get('ngsi_server');
         var options = {
@@ -71,7 +82,7 @@
         };
         if (mp.prefs.get('use_owner_credentials')) {
             options.request_headers['FIWARE-OAuth-Token'] = 'true';
-            options.request_headers['FIWARE-OAuth-Header-Name'] = 'X-Auth-Token';
+            options.request_headers['FIWARE-OAuth-Header-Name'] = 'Authorization';
             options.request_headers['FIWARE-OAuth-Source'] = 'workspaceowner';
         }
 
@@ -92,6 +103,26 @@
     // PRIVATE MEMBERS
     // =========================================================================
 
+    var emptyRegistration = {
+        "description": "",
+        "dataProvided": {
+            "entities": [
+                {
+                    "id": "",
+                    "type": ""
+                }
+            ],
+            "attrs": []
+        },
+        "provider": {
+            "http": {
+                "url": ""
+            },
+            "legacyForwarding": true,
+            "supportedForwardingMode": "all"
+        }
+    };
+
     var onNGSIQuerySuccess = function onNGSIQuerySuccess(next, page, data) {
         var search_info = {
             'resources': data.results,
@@ -102,13 +133,24 @@
         next(data.results, search_info);
     };
 
+    // Note: PATCH /v2/registration/<id> is not implemented in FIWARE Orion 2.3
+    // See https://fiware-orion.readthedocs.io/en/2.3.0/user/ngsiv2_implementation_notes/index.html#registrations
+    //     https://github.com/telefonicaid/fiware-orion/issues/3007
+    //
     var onUpdateRegistration = function onUpdateRegistration(data_string) {
         var data = JSON.parse(data_string);
-        this.ngsi_connection.v2.updateRegistration(data, {keyValues: true}).then(() => {
+        var remove = function remove() {
             this.ngsi_source.refresh();
             if (this.editor_widget != null) {
                 this.editor_widget.remove();
             }
+        }
+
+        this.ngsi_connection.v2.updateRegistration(data).then(() => {
+            remove.call(this);
+        }).catch(e => {
+            mp.widget.log('UpdateRegistration not implemented', mp.log.ERROR);
+            remove.call(this);
         });
     };
 
@@ -190,8 +232,7 @@
         fields = [
             {field: 'id', label: 'Id', sortable: false, width: "20%"},
             {field: 'description', label: 'Description', sortable: false},
-            {field: 'status', label: 'Status', width: '10ex', sortable: false},
-            {field: 'expires', type: 'date', label: 'Expires', width: '24ex', sortable: false}
+            {field: 'status', label: 'Status', width: '10ex', sortable: false}
         ];
 
         if (mp.prefs.get('allow_delete')) {
@@ -241,7 +282,7 @@
         this.layout.center.appendChild(this.table);
     };
 
-    var widget = new NGSITypeBrowser();
+    var widget = new NGSIRegistrationBrowser();
     window.addEventListener("DOMContentLoaded", widget.init.bind(widget), false);
 
 })(StyledElements, MashupPlatform);
